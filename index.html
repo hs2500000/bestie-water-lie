@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>🌱 闺蜜浇水测谎大作战</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden;background:#f0ebe3}
+body{
+  font-family:'PingFang SC','Microsoft YaHei',sans-serif;
+  display:flex;justify-content:center;align-items:center;
+  touch-action:manipulation;
+  -webkit-user-select:none;user-select:none;
+  -webkit-tap-highlight-color:transparent;
+}
+.container{width:100%;max-width:420px;height:100vh;height:100dvh;display:flex;flex-direction:column;padding:10px 14px;position:relative;overflow-y:auto;overflow-x:hidden;background:linear-gradient(180deg,#fce4ec 0%,#f8bbd0 30%,#f0ebe3 60%,#e8f5e9 100%)}
+
+/* ── 顶部标题栏 ── */
+.top-bar{display:flex;justify-content:space-between;align-items:center;padding:6px 0;z-index:2}
+.game-title{font-size:18px;font-weight:900;color:#d81b60}
+.stats{display:flex;gap:12px;font-size:12px;font-weight:bold}
+.stats .score{color:#00b894}
+.stats .round{color:#e17055}
+
+/* ── 闺蜜头像区 ── */
+.bestie-zone{display:flex;align-items:center;gap:10px;padding:8px;z-index:2}
+.bestie-avatar{
+  width:50px;height:50px;border-radius:50%;background:linear-gradient(135deg,#fd79a8,#e84393);
+  display:flex;align-items:center;justify-content:center;font-size:28px;
+  box-shadow:0 4px 15px rgba(232,67,147,.4);flex-shrink:0;
+  animation:avatarPulse 2s ease-in-out infinite;
+}
+@keyframes avatarPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+.bestie-info{flex:1}
+.bestie-name{font-size:14px;font-weight:900;color:#d81b60}
+.bestie-status{font-size:10px;color:#e84393}
+
+/* ── 聊天消息 ── */
+.chat-zone{flex:1;display:flex;flex-direction:column;gap:8px;padding:8px 0;overflow-y:auto;z-index:2;min-height:120px}
+.chat-msg{
+  max-width:85%;padding:10px 14px;border-radius:18px;
+  font-size:14px;line-height:1.5;animation:msgIn .3s ease;
+  word-break:break-word;
+}
+@keyframes msgIn{0%{opacity:0;transform:translateY(10px)}100%{opacity:1;transform:translateY(0)}}
+.chat-msg.from-bestie{
+  align-self:flex-start;background:#fff;color:#2d3436;
+  border-bottom-left-radius:6px;
+  box-shadow:0 2px 8px rgba(0,0,0,.08);
+}
+.chat-msg.from-bestie.urgent{
+  background:#fff5f5;border:2px solid #ff5252;
+  animation:msgIn .3s ease,urgentShake .2s ease 2;
+}
+@keyframes urgentShake{0%,100%{transform:translateX(0)}50%{transform:translateX(3px)}}
+.chat-msg.from-player{
+  align-self:flex-end;background:#dcf8c6;
+  border-bottom-right-radius:6px;
+}
+.chat-msg .msg-time{font-size:9px;color:#b2bec3;margin-top:3px;display:block}
+
+/* ── 植物展示区 ── */
+.plant-zone{
+  display:flex;align-items:center;justify-content:center;
+  padding:10px 0;position:relative;z-index:2;
+}
+.plant-pot{
+  width:160px;height:180px;position:relative;
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-end;
+}
+/* 花盆 */
+.pot{
+  width:90px;height:70px;background:linear-gradient(135deg,#d35400,#e67e22);
+  border-radius:8px 8px 20px 20px;position:relative;z-index:2;
+  box-shadow:0 6px 20px rgba(0,0,0,.2);
+}
+.pot::after{content:'';position:absolute;top:8px;left:8px;right:8px;height:40px;background:linear-gradient(180deg,rgba(255,255,255,.15),transparent);border-radius:4px}
+/* 土壤 */
+.soil{
+  width:80px;height:22px;border-radius:10px 10px 0 0;
+  position:absolute;top:-10px;left:5px;z-index:3;
+  transition:all .5s ease;
+}
+.soil.dry{background:linear-gradient(180deg,#c9a96e,#a0845c)}
+.soil.wet{background:linear-gradient(180deg,#5D4037,#3E2723)}
+.soil .crack{
+  position:absolute;background:rgba(139,90,43,.6);
+  border-radius:1px;display:none;
+}
+.soil.dry .crack{display:block}
+.soil .crack1{width:15px;height:2px;top:4px;left:12px;transform:rotate(-10deg)}
+.soil .crack2{width:10px;height:2px;top:10px;left:28px;transform:rotate(5deg)}
+.soil .crack3{width:12px;height:2px;top:7px;left:42px;transform:rotate(-3deg)}
+.soil .water-drop{
+  position:absolute;font-size:14px;top:-12px;display:none;
+  animation:dropShine 1s ease-in-out infinite;
+}
+.soil.wet .water-drop{display:block}
+.soil .water-drop.w1{left:8px;animation-delay:0s}
+.soil .water-drop.w2{left:30px;animation-delay:.3s}
+.soil .water-drop.w3{left:52px;animation-delay:.6s}
+@keyframes dropShine{0%,100%{opacity:.5;transform:translateY(0)}50%{opacity:1;transform:translateY(-4px)}}
+/* 植物 */
+.plant{
+  position:absolute;bottom:60px;left:50%;transform:translateX(-50%);
+  display:flex;flex-direction:column;align-items:center;z-index:1;
+  transition:all .5s ease;
+}
+.plant .stem{width:6px;height:50px;background:linear-gradient(180deg,#4caf50,#388e3c);border-radius:3px}
+.plant .leaf{
+  position:absolute;width:28px;height:18px;background:#66bb6a;border-radius:50% 0 50% 50%;
+}
+.plant .leaf.left{bottom:32px;left:-18px;transform:rotate(-30deg)}
+.plant .leaf.right{bottom:38px;right:-18px;transform:rotate(30deg) scaleX(-1)}
+.plant .leaf.top{bottom:48px;left:6px;width:22px;height:14px;transform:rotate(-10deg)}
+.plant.thirsty{animation:wilt 2s ease-in-out infinite}
+.plant.thirsty .stem{background:linear-gradient(180deg,#a0b84c,#7a9138)}
+.plant.thirsty .leaf{background:#a0b84c}
+@keyframes wilt{0%,100%{transform:translateX(-50%) rotate(0)}30%{transform:translateX(-50%) rotate(-2deg)}70%{transform:translateX(-50%) rotate(2deg)}}
+.plant.happy{animation:popIn .5s ease}
+@keyframes popIn{0%{transform:translateX(-50%) scale(.9)}50%{transform:translateX(-50%) scale(1.08)}100%{transform:translateX(-50%) scale(1)}}
+.plant .sweat{
+  position:absolute;font-size:20px;top:-5px;right:-15px;
+  display:none;
+}
+.plant.thirsty .sweat{display:block;animation:sweatDrop 1s ease-in-out infinite}
+@keyframes sweatDrop{0%,100%{opacity:.6;transform:translateY(0)}50%{opacity:1;transform:translateY(6px)}}
+
+/* ── 按钮区 ── */
+.btn-row{display:flex;gap:12px;padding:8px 0;z-index:2}
+.action-btn{
+  flex:1;padding:14px;border:none;border-radius:16px;
+  font-size:16px;font-weight:900;cursor:pointer;
+  transition:all .15s ease;
+  -webkit-appearance:none;outline:none;
+  -webkit-tap-highlight-color:transparent;
+}
+.action-btn:active{transform:scale(.95)}
+.btn-water{
+  background:linear-gradient(135deg,#00b894,#00cec9);
+  color:#fff;box-shadow:0 6px 20px rgba(0,184,148,.4);
+}
+.btn-skip{
+  background:linear-gradient(135deg,#b2bec3,#636e72);
+  color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.15);
+}
+
+/* ── 结果弹窗 ── */
+.result-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.65);z-index:400;justify-content:center;align-items:center}
+.result-overlay.show{display:flex}
+.result-dialog{
+  background:#fff;border-radius:20px;padding:28px 22px;text-align:center;
+  max-width:330px;width:90%;animation:bounceIn .5s ease;
+  box-shadow:0 20px 60px rgba(0,0,0,.3);
+}
+@keyframes bounceIn{0%{transform:scale(.3);opacity:0}50%{transform:scale(1.05)}100%{transform:scale(1);opacity:1}}
+.result-icon{font-size:60px;margin-bottom:10px}
+.result-title{font-size:20px;font-weight:900;color:#d81b60;margin-bottom:8px}
+.result-sub{font-size:13px;color:#636e72;margin-bottom:16px;line-height:1.7}
+.result-close{
+  background:linear-gradient(135deg,#fd79a8,#e84393);
+  color:#fff;border:none;padding:12px 35px;border-radius:30px;
+  font-size:16px;font-weight:bold;cursor:pointer;
+  -webkit-appearance:none;outline:none;
+}
+.result-share-hint{font-size:11px;color:#b2bec3;margin-top:10px}
+
+/* ── Toast ── */
+.toast{
+  position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+  font-size:60px;z-index:300;pointer-events:none;
+  animation:toastPop 1s ease forwards;
+}
+@keyframes toastPop{
+  0%{opacity:0;transform:translate(-50%,-50%) scale(.3)}
+  30%{opacity:1;transform:translate(-50%,-50%) scale(1.3)}
+  100%{opacity:0;transform:translate(-50%,-70%) scale(1)}
+}
+
+/* ── 粒子 ── */
+.particles{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:200}
+.particle{position:absolute;font-size:18px;animation:flyUp 1s ease-out forwards}
+@keyframes flyUp{0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-100px) scale(.3)}}
+</style>
+</head>
+<body>
+
+<div class="container" id="container">
+  <!-- 顶部 -->
+  <div class="top-bar">
+    <span class="game-title">🌱 浇水测谎大作战</span>
+    <span class="stats">✅ <span class="score" id="score">0</span> | 🔄 <span class="round" id="roundDisplay">1/10</span></span>
+  </div>
+
+  <!-- 闺蜜 -->
+  <div class="bestie-zone">
+    <div class="bestie-avatar" id="bestieAvatar">👩‍🦰</div>
+    <div class="bestie-info">
+      <div class="bestie-name">你的闺蜜</div>
+      <div class="bestie-status" id="bestieStatus">正在观察菜地...</div>
+    </div>
+  </div>
+
+  <!-- 聊天消息 -->
+  <div class="chat-zone" id="chatZone"></div>
+
+  <!-- 植物 -->
+  <div class="plant-zone">
+    <div class="plant-pot">
+      <div class="plant" id="plant">
+        <span class="sweat">💧</span>
+        <div class="leaf top"></div>
+        <div class="leaf left"></div>
+        <div class="leaf right"></div>
+        <div class="stem"></div>
+      </div>
+      <div class="soil dry" id="soil">
+        <div class="crack crack1"></div>
+        <div class="crack crack2"></div>
+        <div class="crack crack3"></div>
+        <span class="water-drop w1">💦</span>
+        <span class="water-drop w2">💦</span>
+        <span class="water-drop w3">💦</span>
+      </div>
+      <div class="pot"></div>
+    </div>
+  </div>
+
+  <!-- 按钮 -->
+  <div class="btn-row">
+    <button class="action-btn btn-water" id="btnWater">💧 浇水</button>
+    <button class="action-btn btn-skip" id="btnSkip">🤚 不浇</button>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toastBox"></div>
+
+<!-- 粒子 -->
+<div id="particles" class="particles"></div>
+
+<!-- 结果弹窗 -->
+<div class="result-overlay" id="resultOverlay">
+  <div class="result-dialog">
+    <div class="result-icon" id="resultIcon">🎉</div>
+    <div class="result-title" id="resultTitle"></div>
+    <div class="result-sub" id="resultSub"></div>
+    <button class="result-close" id="resultClose">🔄 再来一局</button>
+    <div class="result-share-hint">📸 截屏发给闺蜜，让她看看你的战绩！</div>
+  </div>
+</div>
+
+<script>
+(function(){
+var chatZone=document.getElementById('chatZone');
+var soil=document.getElementById('soil');
+var plant=document.getElementById('plant');
+var scoreEl=document.getElementById('score');
+var roundEl=document.getElementById('roundDisplay');
+var bestieAvatar=document.getElementById('bestieAvatar');
+var bestieStatus=document.getElementById('bestieStatus');
+var btnWater=document.getElementById('btnWater');
+var btnSkip=document.getElementById('btnSkip');
+var toastBox=document.getElementById('toastBox');
+var particlesBox=document.getElementById('particles');
+var resultOverlay=document.getElementById('resultOverlay');
+var resultIcon=document.getElementById('resultIcon');
+var resultTitle=document.getElementById('resultTitle');
+var resultSub=document.getElementById('resultSub');
+var resultClose=document.getElementById('resultClose');
+
+var TOTAL_ROUNDS=10;
+var round=0,score=0,isDry=false,isLying=false,gameOver=false;
+
+// ══════════════════ 闺蜜消息库 ══════════════════
+
+// 真话：菜真的干了
+var TRUTH_MSGS=[
+  '快浇水！！！菜要死了！！！🏃‍♀️💨',
+  '你看土壤都裂开了！！快浇水！！',
+  '我没骗你！这次是真的干了！😱',
+  '救命！！菜叶子都蔫了！！浇水啊！！',
+  '你再不浇水菜就真的没了！！😭',
+  '我亲眼看到的！土都白了！快浇！',
+  '这次绝不说谎！菜真的不行了...🥺',
+  '赶紧的！！菜在求救！！💔',
+];
+
+// 谎话：菜其实不干，她骗你
+var LIE_MSGS=[
+  '快浇水！！！菜快不行了！！！🔥',
+  '紧急！！菜地严重干旱！！💀',
+  '我发誓菜真的要死了！！😫',
+  '浇一下嘛~反正闲着也是闲着~😜',
+  '这次真的真的很干！！信我！！🤥',
+  '菜发微信给我说它渴了...👻',
+  '我刚路过，土都裂成东非大裂谷了！🌋',
+  '你忍心看菜渴死吗？？虽然它好像...还行？🫣',
+];
+
+// 闺蜜反应
+var REACT_CORRECT_SKIP=['切，被你看穿了 😒','好吧...菜确实还活着 🙄','你怎么知道我在骗你！','哼！算你聪明 😤'];
+var REACT_CORRECT_WATER=['还好你浇了！！菜活过来了！！😮‍💨','这次我真的没骗你！救菜一命！💚','你看！浇完水菜就精神了！✨','好险好险...差点就没了 😰'];
+var REACT_WRONG_SKIP=['菜真的死了！！！你看啊！！！😭','我这次没骗你啊！！为什么不浇！！💔','完了完了...菜没了...都怪你 😢','你居然不信我！这次是真的啊！！🤬'];
+var REACT_WRONG_WATER=['哈哈哈哈骗到你了！！菜根本不干！！🤣','上当了上当了！这菜比你想象的坚强~😝','水白浇了吧！我就随口一说而已 😈','哈哈哈被骗了吧！请你喝奶茶赔罪 🧋'];
+
+// ══════════════════ 游戏逻辑 ══════════════════
+
+function addChat(text,cls){
+  var d=document.createElement('div');
+  d.className='chat-msg '+cls;
+  var now=new Date();
+  var t=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+  d.innerHTML=text+'<span class="msg-time">'+t+'</span>';
+  chatZone.appendChild(d);
+  chatZone.scrollTop=chatZone.scrollHeight;
+}
+
+function showToast(emoji){
+  var t=document.createElement('div');t.className='toast';t.textContent=emoji;
+  toastBox.appendChild(t);setTimeout(function(){t.remove()},1100);
+}
+
+function spawnParticles(x,y,count,emojis){
+  for(var i=0;i<count;i++){
+    var p=document.createElement('span');p.className='particle';
+    p.textContent=emojis[i%emojis.length];
+    p.style.left=(x+(Math.random()-.5)*120)+'px';
+    p.style.top=y+'px';
+    p.style.animationDuration=(.5+Math.random()*.8)+'s';
+    particlesBox.appendChild(p);setTimeout(function(){p.remove()},1400);
+  }
+}
+
+function updateSoil(){
+  if(isDry){
+    soil.className='soil dry';
+    plant.className='plant thirsty';
+    bestieStatus.textContent='⚠️ 菜好像真的蔫了...';
+  } else {
+    soil.className='soil wet';
+    plant.className='plant happy';
+    bestieStatus.textContent='🌿 菜看起来很健康！';
+  }
+}
+
+function newRound(){
+  if(round>=TOTAL_ROUNDS){endGame();return}
+  round++;
+  roundEl.textContent=round+'/'+TOTAL_ROUNDS;
+
+  // 随机决定：菜是否真的干 (50%概率)
+  isDry=Math.random()<.5;
+  // 闺蜜是否说谎
+  isLying=!isDry; // 当菜不干时她说谎
+
+  updateSoil();
+  bestieAvatar.textContent=isLying?'👩‍🦰':'👩‍🦰';
+
+  // 闺蜜发消息
+  var msg=isLying?LIE_MSGS[Math.floor(Math.random()*LIE_MSGS.length)]:TRUTH_MSGS[Math.floor(Math.random()*TRUTH_MSGS.length)];
+  var cls='from-bestie';
+  if(isDry)cls+=' urgent';
+  addChat(msg,cls);
+
+  btnWater.disabled=false;
+  btnSkip.disabled=false;
+}
+
+function handleAction(watered){
+  if(gameOver)return;
+  btnWater.disabled=true;
+  btnSkip.disabled=true;
+
+  var correct=false;
+  if(isDry&&watered)correct=true;     // 真的干 → 浇水正确
+  if(!isDry&&!watered)correct=true;   // 假的干 → 不浇正确
+
+  if(correct){
+    score++;
+    scoreEl.textContent=score;
+    showToast('✅');
+    var react=watered?REACT_CORRECT_WATER:REACT_CORRECT_SKIP;
+    addChat(react[Math.floor(Math.random()*react.length)],'from-bestie');
+    if(watered){soil.className='soil wet';plant.className='plant happy'}
+    bestieStatus.textContent=watered?'💚 幸好你浇了！':'😒 被你看穿了...';
+    spawnParticles(window.innerWidth/2,window.innerHeight/2,6,['✨','💚','✅','🌟']);
+  } else {
+    showToast('❌');
+    var react=watered?REACT_WRONG_WATER:REACT_WRONG_SKIP;
+    addChat(react[Math.floor(Math.random()*react.length)],'from-bestie');
+    if(watered){soil.className='soil wet';plant.className='plant happy'}
+    bestieStatus.textContent=watered?'😂 骗到你了！':'😭 这次是真的啊...';
+    spawnParticles(window.innerWidth/2,window.innerHeight/2,6,['😈','😂','💔','🤡']);
+  }
+
+  // 玩家回复
+  var playerMsg=watered?'💧 我浇水了！':'🤚 我不浇！';
+  addChat(playerMsg,'from-player');
+
+  // 下一轮
+  setTimeout(function(){newRound()},1500);
+}
+
+function endGame(){
+  gameOver=true;
+  var pct=Math.round(score/TOTAL_ROUNDS*100);
+  var icon,title,sub;
+
+  if(pct>=80){icon='🏆';title='测谎大师！';sub='闺蜜的任何谎言都骗不了你！\n你就是传说中的火眼金睛 🔥👀';}
+  else if(pct>=60){icon='😎';title='眼光不错！';sub='大部分谎言都被你识破了\n闺蜜表示压力很大 😏';}
+  else if(pct>=40){icon='🤔';title='半信半疑...';sub='有时候信了闺蜜的鬼话\n有时候又太冷漠...再接再厉！';}
+  else{icon='🤡';title='被闺蜜拿捏了...';sub='她说浇水你就浇\n她说谎你也信...闺蜜笑疯了 😂';}
+
+  resultIcon.textContent=icon;
+  resultTitle.textContent=title;
+  resultSub.textContent='你答对了 '+score+'/'+TOTAL_ROUNDS+' 题\n正确率 '+pct+'%\n\n'+sub;
+  resultOverlay.classList.add('show');
+}
+
+btnWater.addEventListener('pointerdown',function(e){e.preventDefault();handleAction(true)});
+btnSkip.addEventListener('pointerdown',function(e){e.preventDefault();handleAction(false)});
+
+resultClose.addEventListener('pointerdown',function(e){
+  e.preventDefault();
+  resultOverlay.classList.remove('show');
+  round=0;score=0;gameOver=false;
+  scoreEl.textContent='0';roundEl.textContent='1/10';
+  chatZone.innerHTML='';
+  newRound();
+});
+
+// ══════════════════ 开始 ══════════════════
+
+addChat('嗨！我是你的闺蜜~ 👋<br>菜地那边好像有点情况，我来告诉你！','from-bestie');
+addChat('有些时候我说的是真的...<br>有些时候嘛...嘿嘿 😈','from-bestie');
+setTimeout(function(){newRound()},1500);
+})();
+</script>
+</body>
+</html>
