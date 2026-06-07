@@ -344,24 +344,27 @@ var resultClose=document.getElementById('resultClose');
 var TOTAL_ROUNDS=10;
 var round=0,score=0,isDry=false,isLying=false,gameOver=false,voiceOn=true;
 
-// ══════════════════ 语音系统 (MP3预加载) ══════════════════
-var audioPool={};
-// 页面加载时立即预加载音频（不依赖首次点击）
-['correct','wrong'].forEach(function(n){
-  var a=new Audio();a.src='audio/'+n+'.mp3';a.preload='auto';a.load();audioPool[n]=a;
-});
+// ══════════════════ 语音系统 (MP3 — 和高考加油同方案) ══════════════════
+var audioPool={},audioLoaded=false;
+function preloadAudio(){
+  if(audioLoaded)return;
+  ['correct','wrong'].forEach(function(n){
+    var a=new Audio();a.src='audio/'+n+'.mp3';a.preload='auto';a.load();audioPool[n]=a;
+  });
+  audioLoaded=true;
+}
 function playAudio(name){
   if(!voiceOn)return;
+  preloadAudio();
   var a=audioPool[name];if(!a)return;
   try{a.currentTime=0}catch(e){}
-  var p=a.play();
-  if(p&&p.catch){p.catch(function(){a.load();a.play().catch(function(){})})};
+  a.play().catch(function(){
+    a.load();setTimeout(function(){a.play().catch(function(){})},80);
+  });
 }
 voiceToggle.addEventListener('pointerdown',function(e){
   e.preventDefault();e.stopPropagation();
   voiceOn=!voiceOn;voiceToggle.textContent=voiceOn?'🔊':'🔇';
-  // 切换时激活音频上下文
-  if(voiceOn){var a=audioPool['correct'];if(a){a.load();setTimeout(function(){a.play().catch(function(){})},100);setTimeout(function(){try{a.pause();a.currentTime=0}catch(e){}},300)}}
 });
 
 // ══════════════════ 闺蜜消息库 ══════════════════
