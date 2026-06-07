@@ -345,23 +345,23 @@ var TOTAL_ROUNDS=10;
 var round=0,score=0,isDry=false,isLying=false,gameOver=false,voiceOn=true;
 
 // ══════════════════ 语音系统 (MP3预加载) ══════════════════
-var audioPool={},audioLoaded=false;
-function preloadAudio(){
-  if(audioLoaded)return;
-  ['correct','wrong'].forEach(function(n){
-    var a=new Audio();a.src='audio/'+n+'.mp3';a.preload='auto';a.load();audioPool[n]=a;
-  });
-  audioLoaded=true;
-}
+var audioPool={};
+// 页面加载时立即预加载音频（不依赖首次点击）
+['correct','wrong'].forEach(function(n){
+  var a=new Audio();a.src='audio/'+n+'.mp3';a.preload='auto';a.load();audioPool[n]=a;
+});
 function playAudio(name){
-  if(!voiceOn)return;preloadAudio();
+  if(!voiceOn)return;
   var a=audioPool[name];if(!a)return;
   try{a.currentTime=0}catch(e){}
-  a.play().catch(function(){a.load();setTimeout(function(){a.play().catch(function(){})},50)});
+  var p=a.play();
+  if(p&&p.catch){p.catch(function(){a.load();a.play().catch(function(){})})};
 }
 voiceToggle.addEventListener('pointerdown',function(e){
   e.preventDefault();e.stopPropagation();
   voiceOn=!voiceOn;voiceToggle.textContent=voiceOn?'🔊':'🔇';
+  // 切换时激活音频上下文
+  if(voiceOn){var a=audioPool['correct'];if(a){a.load();setTimeout(function(){a.play().catch(function(){})},100);setTimeout(function(){try{a.pause();a.currentTime=0}catch(e){}},300)}}
 });
 
 // ══════════════════ 闺蜜消息库 ══════════════════
@@ -589,9 +589,6 @@ resultClose.addEventListener('pointerdown',function(e){
 });
 
 // ══════════════════ 开始 ══════════════════
-
-// 首次交互预加载音频
-document.addEventListener('pointerdown',function pa(){preloadAudio()},{once:false});
 
 addChat('嗨！我是你的闺蜜~ 👋<br>菜地那边好像有点情况，我来告诉你！','from-bestie');
 addChat('有些时候我说的是真的...<br>有些时候嘛...嘿嘿 😈','from-bestie');
