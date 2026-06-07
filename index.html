@@ -381,6 +381,10 @@ function handleAction(watered){
     score++;
     scoreEl.textContent=score;
     showToast('✅');
+    // 玩家先回复
+    var playerMsg=watered?'💧 我浇水了！':'🤚 我不浇！';
+    addChat(playerMsg,'from-player');
+    // 然后闺蜜反应
     var react=watered?REACT_CORRECT_WATER:REACT_CORRECT_SKIP;
     addChat(react[Math.floor(Math.random()*react.length)],'from-bestie');
     if(watered){soil.className='soil wet';plant.className='plant happy'}
@@ -388,16 +392,16 @@ function handleAction(watered){
     spawnParticles(window.innerWidth/2,window.innerHeight/2,6,['✨','💚','✅','🌟']);
   } else {
     showToast('❌');
+    // 玩家先回复
+    var playerMsg=watered?'💧 我浇水了！':'🤚 我不浇！';
+    addChat(playerMsg,'from-player');
+    // 然后闺蜜反应
     var react=watered?REACT_WRONG_WATER:REACT_WRONG_SKIP;
     addChat(react[Math.floor(Math.random()*react.length)],'from-bestie');
     if(watered){soil.className='soil wet';plant.className='plant happy'}
     bestieStatus.textContent=watered?'😂 骗到你了！':'😭 这次是真的啊...';
     spawnParticles(window.innerWidth/2,window.innerHeight/2,6,['😈','😂','💔','🤡']);
   }
-
-  // 玩家回复
-  var playerMsg=watered?'💧 我浇水了！':'🤚 我不浇！';
-  addChat(playerMsg,'from-player');
 
   // 下一轮
   setTimeout(function(){newRound()},1500);
