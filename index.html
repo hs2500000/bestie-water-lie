@@ -465,7 +465,7 @@ function newRound(){
 function showJudgeBadge(type){
   var b=document.createElement('div');
   b.className='judge-badge '+type;
-  b.textContent=type==='correct'?'✅ 你对了！':'❌ 你错了！';
+  b.textContent=type==='correct'?'✅ 你对了！':'❌ 被骗了吧！';
   document.body.appendChild(b);
   setTimeout(function(){b.remove()},900);
 }
@@ -524,7 +524,7 @@ function handleAction(watered){
     // 绿色粒子
     spawnParticles(window.innerWidth/2,window.innerHeight/2,10,['✨','💚','✅','🌟','💎','🎯']);
   } else {
-    // ═══ 你错了！红色系 ═══
+    // ═══ 被骗了吧！红色系 ═══
     playAudio('wrong');
     scoreEl.classList.add('shake');
     setTimeout(function(){scoreEl.classList.remove('shake')},500);
