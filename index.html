@@ -19,7 +19,8 @@ body{
 /* ── 顶部标题栏 ── */
 .top-bar{display:flex;justify-content:space-between;align-items:center;padding:6px 0;z-index:2}
 .game-title{font-size:18px;font-weight:900;color:#d81b60}
-.stats{display:flex;gap:12px;font-size:12px;font-weight:bold}
+.stats{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:bold}
+.voice-btn{background:none;border:none;font-size:14px;cursor:pointer;padding:0;-webkit-appearance:none}
 .stats .score{color:#00b894}
 .stats .round{color:#e17055}
 
@@ -259,7 +260,7 @@ body{
   <!-- 顶部 -->
   <div class="top-bar">
     <span class="game-title">🌱 浇水测谎大作战</span>
-    <span class="stats">✅ <span class="score" id="score">0</span> | 🔄 <span class="round" id="roundDisplay">1/10</span></span>
+    <span class="stats"><button class="voice-btn" id="voiceToggle">🔊</button> ✅ <span class="score" id="score">0</span> | 🔄 <span class="round" id="roundDisplay">1/10</span></span>
   </div>
 
   <!-- 闺蜜 -->
@@ -326,6 +327,7 @@ var chatZone=document.getElementById('chatZone');
 var soil=document.getElementById('soil');
 var plant=document.getElementById('plant');
 var scoreEl=document.getElementById('score');
+var voiceToggle=document.getElementById('voiceToggle');
 var roundEl=document.getElementById('roundDisplay');
 var bestieAvatar=document.getElementById('bestieAvatar');
 var bestieStatus=document.getElementById('bestieStatus');
@@ -340,7 +342,27 @@ var resultSub=document.getElementById('resultSub');
 var resultClose=document.getElementById('resultClose');
 
 var TOTAL_ROUNDS=10;
-var round=0,score=0,isDry=false,isLying=false,gameOver=false;
+var round=0,score=0,isDry=false,isLying=false,gameOver=false,voiceOn=true;
+
+// ══════════════════ 语音系统 (MP3预加载) ══════════════════
+var audioPool={},audioLoaded=false;
+function preloadAudio(){
+  if(audioLoaded)return;
+  ['correct','wrong'].forEach(function(n){
+    var a=new Audio();a.src='audio/'+n+'.mp3';a.preload='auto';a.load();audioPool[n]=a;
+  });
+  audioLoaded=true;
+}
+function playAudio(name){
+  if(!voiceOn)return;preloadAudio();
+  var a=audioPool[name];if(!a)return;
+  try{a.currentTime=0}catch(e){}
+  a.play().catch(function(){a.load();setTimeout(function(){a.play().catch(function(){})},50)});
+}
+voiceToggle.addEventListener('pointerdown',function(e){
+  e.preventDefault();e.stopPropagation();
+  voiceOn=!voiceOn;voiceToggle.textContent=voiceOn?'🔊':'🔇';
+});
 
 // ══════════════════ 闺蜜消息库 ══════════════════
 
@@ -463,6 +485,7 @@ function handleAction(watered){
 
   if(correct){
     // ═══ 答对了！绿色系 ═══
+    playAudio('correct');
     score++;
     scoreEl.textContent=score;
     scoreEl.classList.add('pulse');
@@ -499,6 +522,7 @@ function handleAction(watered){
     spawnParticles(window.innerWidth/2,window.innerHeight/2,10,['✨','💚','✅','🌟','💎','🎯']);
   } else {
     // ═══ 答错了！红色系 ═══
+    playAudio('wrong');
     scoreEl.classList.add('shake');
     setTimeout(function(){scoreEl.classList.remove('shake')},500);
 
@@ -565,6 +589,9 @@ resultClose.addEventListener('pointerdown',function(e){
 });
 
 // ══════════════════ 开始 ══════════════════
+
+// 首次交互预加载音频
+document.addEventListener('pointerdown',function pa(){preloadAudio()},{once:false});
 
 addChat('嗨！我是你的闺蜜~ 👋<br>菜地那边好像有点情况，我来告诉你！','from-bestie');
 addChat('有些时候我说的是真的...<br>有些时候嘛...嘿嘿 😈','from-bestie');
