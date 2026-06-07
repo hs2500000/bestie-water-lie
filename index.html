@@ -262,7 +262,7 @@ body{
 <div class="container" id="container">
   <!-- 顶部 -->
   <div class="top-bar">
-    <span class="game-title">🌱 浇水测谎大作战 <span style="font-size:9px;color:#b2bec3">v5</span></span>
+    <span class="game-title">🌱 浇水测谎大作战 <span style="font-size:9px;color:#b2bec3">v6</span></span>
     <span class="stats"><button class="voice-btn" id="voiceToggle">🔊</button> ✅ <span class="score" id="score">0</span> | 🔄 <span class="round" id="roundDisplay">1/10</span></span>
   </div>
 
@@ -362,7 +362,7 @@ function sfxTap(){beep(600,.06,.06);beep(900,.04,.04,.04)}
 var audioPool={},audioLoaded=false;
 function preloadAudio(){
   if(audioLoaded)return;
-  ['correct','wrong'].forEach(function(n){
+  ['you_dui','bei_pian'].forEach(function(n){
     var a=new Audio();a.src='audio/'+n+'.mp3';a.preload='auto';a.load();audioPool[n]=a;
   });
   audioLoaded=true;
@@ -502,7 +502,7 @@ function handleAction(watered){
 
   if(correct){
     // ═══ 你对了！绿色系 ═══
-    sfxTap(); playAudio('correct');
+    sfxTap(); playAudio('you_dui');
     score++;
     scoreEl.textContent=score;
     scoreEl.classList.add('pulse');
@@ -539,7 +539,7 @@ function handleAction(watered){
     spawnParticles(window.innerWidth/2,window.innerHeight/2,10,['✨','💚','✅','🌟','💎','🎯']);
   } else {
     // ═══ 被骗了吧！红色系 ═══
-    sfxTap(); playAudio('wrong');
+    sfxTap(); playAudio('bei_pian');
     scoreEl.classList.add('shake');
     setTimeout(function(){scoreEl.classList.remove('shake')},500);
 
