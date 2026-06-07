@@ -168,15 +168,84 @@ body{
 
 /* ── Toast ── */
 .toast{
-  position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
-  font-size:60px;z-index:300;pointer-events:none;
-  animation:toastPop 1s ease forwards;
+  position:fixed;top:40%;left:50%;transform:translate(-50%,-50%);
+  z-index:300;pointer-events:none;text-align:center;
+  animation:toastPop 1.2s ease forwards;
 }
+.toast .t-emoji{font-size:64px;display:block}
+.toast .t-text{font-size:20px;font-weight:900;display:block;margin-top:2px}
+.toast.correct .t-text{color:#00b894}
+.toast.wrong .t-text{color:#d63031}
 @keyframes toastPop{
   0%{opacity:0;transform:translate(-50%,-50%) scale(.3)}
-  30%{opacity:1;transform:translate(-50%,-50%) scale(1.3)}
-  100%{opacity:0;transform:translate(-50%,-70%) scale(1)}
+  25%{opacity:1;transform:translate(-50%,-50%) scale(1.2)}
+  60%{opacity:1;transform:translate(-50%,-50%) scale(1)}
+  100%{opacity:0;transform:translate(-50%,-80%) scale(.9)}
 }
+
+/* ── 正确/错误 容器特效 ── */
+.container.correct-flash{animation:correctGlow .6s ease}
+@keyframes correctGlow{
+  0%{box-shadow:inset 0 0 0 rgba(0,184,148,0)}
+  50%{box-shadow:inset 0 0 80px rgba(0,184,148,.35)}
+  100%{box-shadow:inset 0 0 0 rgba(0,184,148,0)}
+}
+.container.wrong-flash{animation:wrongShake .5s ease}
+@keyframes wrongShake{
+  0%,100%{transform:translateX(0)}
+  15%{transform:translateX(-8px)}
+  30%{transform:translateX(8px)}
+  45%{transform:translateX(-5px)}
+  60%{transform:translateX(5px)}
+  75%{transform:translateX(-2px)}
+  90%{transform:translateX(2px)}
+}
+
+/* ── 分数动画 ── */
+.stats .score.pulse{animation:scorePulse .5s ease}
+@keyframes scorePulse{0%{transform:scale(1)}50%{transform:scale(1.5);color:#ffd700}100%{transform:scale(1)}}
+.stats .score.shake{animation:scoreShake .5s ease}
+@keyframes scoreShake{0%,100%{transform:translateX(0)}30%{transform:translateX(-4px)}60%{transform:translateX(4px)}}
+
+/* ── 闺蜜头像反应 ── */
+.bestie-avatar.react-correct{animation:avatarCorrect .5s ease}
+@keyframes avatarCorrect{0%{transform:scale(1)}50%{transform:scale(.85);background:linear-gradient(135deg,#00b894,#55efc4)}100%{transform:scale(1)}}
+.bestie-avatar.react-wrong{animation:avatarWrong .5s ease}
+@keyframes avatarWrong{0%{transform:scale(1)}50%{transform:scale(1.2);background:linear-gradient(135deg,#ff5252,#d63031)}100%{transform:scale(1)}}
+
+/* ── 植物反应 ── */
+.plant.correct-glow{filter:drop-shadow(0 0 8px rgba(0,184,148,.6))}
+.plant.wrong-wilt{animation:wrongWilt .6s ease}
+@keyframes wrongWilt{0%,100%{transform:translateX(-50%) rotate(0)}30%{transform:translateX(-50%) rotate(-5deg)}70%{transform:translateX(-50%) rotate(5deg)}}
+
+/* ── 答对/答错 大标签 ── */
+.judge-badge{
+  position:fixed;top:35%;left:50%;transform:translate(-50%,-50%) rotate(-15deg);
+  font-size:36px;font-weight:900;z-index:310;pointer-events:none;
+  padding:12px 28px;border-radius:16px;
+  animation:badgeStamp .8s ease forwards;
+  letter-spacing:2px;
+}
+.judge-badge.correct{
+  color:#fff;background:linear-gradient(135deg,#00b894,#00cec9);
+  box-shadow:0 8px 30px rgba(0,184,148,.5);
+}
+.judge-badge.wrong{
+  color:#fff;background:linear-gradient(135deg,#e17055,#d63031);
+  box-shadow:0 8px 30px rgba(214,48,49,.5);
+}
+@keyframes badgeStamp{
+  0%{opacity:0;transform:translate(-50%,-50%) rotate(-15deg) scale(2)}
+  20%{opacity:1;transform:translate(-50%,-50%) rotate(-5deg) scale(1)}
+  30%{transform:translate(-50%,-50%) rotate(2deg) scale(1.05)}
+  40%{transform:translate(-50%,-50%) rotate(0) scale(1)}
+  80%{opacity:1;transform:translate(-50%,-50%) rotate(0) scale(1)}
+  100%{opacity:0;transform:translate(-50%,-50%) rotate(0) scale(.8)}
+}
+
+/* ── 土壤高亮 ── */
+.soil.highlight-dry{border:2px solid #d63031;box-shadow:0 0 15px rgba(214,48,49,.4)}
+.soil.highlight-wet{border:2px solid #00b894;box-shadow:0 0 15px rgba(0,184,148,.4)}
 
 /* ── 粒子 ── */
 .particles{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:200}
@@ -368,39 +437,99 @@ function newRound(){
   btnSkip.disabled=false;
 }
 
+function showJudgeBadge(type){
+  var b=document.createElement('div');
+  b.className='judge-badge '+type;
+  b.textContent=type==='correct'?'✅ 答对了！':'❌ 答错了！';
+  document.body.appendChild(b);
+  setTimeout(function(){b.remove()},900);
+}
+
 function handleAction(watered){
   if(gameOver)return;
   btnWater.disabled=true;
   btnSkip.disabled=true;
 
   var correct=false;
-  if(isDry&&watered)correct=true;     // 真的干 → 浇水正确
-  if(!isDry&&!watered)correct=true;   // 假的干 → 不浇正确
+  if(isDry&&watered)correct=true;
+  if(!isDry&&!watered)correct=true;
+
+  var container=document.getElementById('container');
+  var avatar=document.getElementById('bestieAvatar');
+
+  // 玩家先回复（一致）
+  var playerMsg=watered?'💧 我浇水了！':'🤚 我不浇！';
+  addChat(playerMsg,'from-player');
 
   if(correct){
+    // ═══ 答对了！绿色系 ═══
     score++;
     scoreEl.textContent=score;
-    showToast('✅');
-    // 玩家先回复
-    var playerMsg=watered?'💧 我浇水了！':'🤚 我不浇！';
-    addChat(playerMsg,'from-player');
-    // 然后闺蜜反应
+    scoreEl.classList.add('pulse');
+    setTimeout(function(){scoreEl.classList.remove('pulse')},500);
+
+    // 大标签
+    showJudgeBadge('correct');
+
+    // 容器绿光
+    container.classList.add('correct-flash');
+    setTimeout(function(){container.classList.remove('correct-flash')},600);
+
+    // 土壤高亮
+    if(isDry)soil.classList.add('highlight-dry');
+    else soil.classList.add('highlight-wet');
+    setTimeout(function(){soil.classList.remove('highlight-dry','highlight-wet')},800);
+
+    // 植物开心
+    plant.classList.add('correct-glow');
+    setTimeout(function(){plant.classList.remove('correct-glow')},800);
+    if(watered){soil.className='soil wet';plant.className='plant happy'}
+    else plant.className='plant correct-glow';
+
+    // 闺蜜头像反应
+    avatar.textContent='😒';avatar.classList.add('react-correct');
+    setTimeout(function(){avatar.classList.remove('react-correct');avatar.textContent='👩‍🦰'},600);
+
+    // 闺蜜回复
     var react=watered?REACT_CORRECT_WATER:REACT_CORRECT_SKIP;
     addChat(react[Math.floor(Math.random()*react.length)],'from-bestie');
-    if(watered){soil.className='soil wet';plant.className='plant happy'}
     bestieStatus.textContent=watered?'💚 幸好你浇了！':'😒 被你看穿了...';
-    spawnParticles(window.innerWidth/2,window.innerHeight/2,6,['✨','💚','✅','🌟']);
+
+    // 绿色粒子
+    spawnParticles(window.innerWidth/2,window.innerHeight/2,10,['✨','💚','✅','🌟','💎','🎯']);
   } else {
-    showToast('❌');
-    // 玩家先回复
-    var playerMsg=watered?'💧 我浇水了！':'🤚 我不浇！';
-    addChat(playerMsg,'from-player');
-    // 然后闺蜜反应
+    // ═══ 答错了！红色系 ═══
+    scoreEl.classList.add('shake');
+    setTimeout(function(){scoreEl.classList.remove('shake')},500);
+
+    // 大标签
+    showJudgeBadge('wrong');
+
+    // 容器红色震动
+    container.classList.add('wrong-flash');
+    setTimeout(function(){container.classList.remove('wrong-flash')},500);
+
+    // 土壤红框
+    if(isDry)soil.classList.add('highlight-dry');
+    else soil.classList.add('highlight-wet');
+    setTimeout(function(){soil.classList.remove('highlight-dry','highlight-wet')},800);
+
+    // 植物蔫一下
+    if(!watered)plant.classList.add('wrong-wilt');
+    setTimeout(function(){plant.classList.remove('wrong-wilt')},600);
+    if(watered){soil.className='soil wet';plant.className='plant happy'}
+
+    // 闺蜜头像反应
+    avatar.textContent='🤣';avatar.classList.add('react-wrong');
+    setTimeout(function(){avatar.classList.remove('react-wrong');avatar.textContent='👩‍🦰'},600);
+
+    // 闺蜜回复
     var react=watered?REACT_WRONG_WATER:REACT_WRONG_SKIP;
     addChat(react[Math.floor(Math.random()*react.length)],'from-bestie');
-    if(watered){soil.className='soil wet';plant.className='plant happy'}
     bestieStatus.textContent=watered?'😂 骗到你了！':'😭 这次是真的啊...';
-    spawnParticles(window.innerWidth/2,window.innerHeight/2,6,['😈','😂','💔','🤡']);
+
+    // 红色粒子
+    spawnParticles(window.innerWidth/2,window.innerHeight/2,10,['😈','😂','💔','🤡','💀','🔥']);
   }
 
   // 下一轮
