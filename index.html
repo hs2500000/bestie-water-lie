@@ -465,7 +465,7 @@ function newRound(){
 function showJudgeBadge(type){
   var b=document.createElement('div');
   b.className='judge-badge '+type;
-  b.textContent=type==='correct'?'✅ 答对了！':'❌ 答错了！';
+  b.textContent=type==='correct'?'✅ 你对了！':'❌ 你错了！';
   document.body.appendChild(b);
   setTimeout(function(){b.remove()},900);
 }
@@ -487,7 +487,7 @@ function handleAction(watered){
   addChat(playerMsg,'from-player');
 
   if(correct){
-    // ═══ 答对了！绿色系 ═══
+    // ═══ 你对了！绿色系 ═══
     playAudio('correct');
     score++;
     scoreEl.textContent=score;
@@ -524,7 +524,7 @@ function handleAction(watered){
     // 绿色粒子
     spawnParticles(window.innerWidth/2,window.innerHeight/2,10,['✨','💚','✅','🌟','💎','🎯']);
   } else {
-    // ═══ 答错了！红色系 ═══
+    // ═══ 你错了！红色系 ═══
     playAudio('wrong');
     scoreEl.classList.add('shake');
     setTimeout(function(){scoreEl.classList.remove('shake')},500);
@@ -575,7 +575,7 @@ function endGame(){
 
   resultIcon.textContent=icon;
   resultTitle.textContent=title;
-  resultSub.textContent='你答对了 '+score+'/'+TOTAL_ROUNDS+' 题\n正确率 '+pct+'%\n\n'+sub;
+  resultSub.textContent='你你对了 '+score+'/'+TOTAL_ROUNDS+' 题\n正确率 '+pct+'%\n\n'+sub;
   resultOverlay.classList.add('show');
 }
 
